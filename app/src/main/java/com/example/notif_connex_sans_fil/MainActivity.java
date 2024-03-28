@@ -7,23 +7,34 @@ import android.os.Bundle;
 
 public class MainActivity extends AppCompatActivity {
 
-    private Intent wifiIntent;
+    private Intent wifiScanIntent;
+    private Intent wifiTrackingIntent;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        this.wifiIntent = new Intent(this, WifiScanService.class);
+        this.wifiScanIntent = new Intent(this, WifiScanService.class);
+        startService(this.wifiScanIntent);
+
+        this.wifiTrackingIntent = new Intent(this, WifiTrackerService.class);
+        startService(this.wifiTrackingIntent);
     }
 
     @Override
     protected void onStart() {
         super.onStart();
-        startService(this.wifiIntent);
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+//        stopService(this.wifiScanIntent);
     }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        stopService(this.wifiIntent);
+        stopService(this.wifiScanIntent);
+        stopService(this.wifiTrackingIntent);
     }
 }

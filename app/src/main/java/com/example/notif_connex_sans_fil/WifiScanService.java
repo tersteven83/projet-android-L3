@@ -5,11 +5,15 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.net.wifi.ScanResult;
+import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
 import android.os.Binder;
 import android.os.IBinder;
 import android.util.Log;
+import android.widget.Toast;
 
 import androidx.annotation.Nullable;
 
@@ -52,8 +56,24 @@ public class WifiScanService extends Service {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        this.executorService.execute(new WifiScanExecutor(startId));
-        return START_STICKY;
+
+        if(wifiManager.isWifiEnabled()){
+            ConnectivityManager connectivityManager = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+            NetworkInfo wifiConnection = connectivityManager.getNetworkInfo(ConnectivityManager.TYPE_WIFI);
+
+            if((wifiConnection != null) && wifiConnection.isConnectedOrConnecting()){
+                WifiInfo wifiInfo = wifiManager.getConnectionInfo();
+                Log.i(TAG, "Connecté amty pr e: " + wifiInfo.getSSID());
+            } else {
+                this.executorService.execute(new WifiScanExecutor(startId));
+            }
+            return START_STICKY;
+        }
+        else {
+            Toast.makeText(this, "Wifi disabled", Toast.LENGTH_LONG);
+            return START_REDELIVER_INTENT;
+        }
+
     }
 
     private class WifiScanExecutor implements Runnable {
@@ -76,14 +96,15 @@ public class WifiScanService extends Service {
                 new IntentFilter(WifiManager.SCAN_RESULTS_AVAILABLE_ACTION));
     }
 
-    private BroadcastReceiver listWifiChanged = new BroadcastReceiver() {
+    private final BroadcastReceiver listWifiChanged = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
             if (Objects.equals(intent.getAction(), LIST_SCAN_CHANGED)) {
                 ArrayList<String> wifiScanResults = intent.getStringArrayListExtra("scanResults");
-                for(String ssid : wifiScanResults){
-                    Log.i(TAG, ssid);
-                }
+                if (wifiScanResults != null)
+                    for(String ssid : wifiScanResults){
+                        Log.i(TAG, ssid);
+                    }
             }
         }
     };

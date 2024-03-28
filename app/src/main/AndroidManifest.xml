@@ -28,6 +28,7 @@
             </intent-filter>
         </activity>
         <service android:name=".WifiScanService" android:exported="false"></service>
+        <service android:name=".WifiTrackerService"></service>
     </application>
 
 </manifest>
